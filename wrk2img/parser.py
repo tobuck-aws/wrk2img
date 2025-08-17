@@ -18,6 +18,7 @@ class UnitMultiplier(Enum):
     ms = 1e-3
     us = 1e-6
     ns = 1e-9
+    m = 60  # minutes
 
 
 class Parser:
@@ -49,8 +50,11 @@ class Parser:
             # parse latency
             for matches in re.findall(RegexLibrary.latency.value, single_wrk_output):
                 percentile, result, unit = matches
-                scaled_result = round(float(result) * UnitMultiplier[unit].value, 9)
-                parsed[label][float(percentile)] = scaled_result
+                try:
+                    scaled_result = round(float(result) * UnitMultiplier[unit].value, 9)
+                    parsed[label][float(percentile)] = scaled_result
+                except KeyError:
+                    raise ValueError(f"Unknown time unit '{unit}' found in latency data. Supported units: {', '.join([e.name for e in UnitMultiplier])}")
             # parse detailed latency, only in wrk2 output
             for matches in re.findall(RegexLibrary.detailed_latency.value, single_wrk_output):
                 result, percentile = matches
